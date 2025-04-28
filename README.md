@@ -21,7 +21,7 @@ pip install stylus-analyzer
 ### From Source
 
 ```bash
-git clone https://github.com//stylus-analyzer.git
+git clone https://github.com/Jay-Sojitra/stylus-analyzer.git
 cd stylus-analyzer
 pip install -e .
 ```
