@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="stylus-analyzer",  # Using hyphens in package name is more standard for pip install
-    version="0.1.0",
+    version="0.1.2",
     packages=find_packages(),
     install_requires=[
         "openai>=1.0.0",
@@ -19,7 +19,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Jay Sojitra",
     author_email="jaysojitra1011@gmail.com",
-    url="https://github.com/yourusername/stylus_analyzer",
+    url="https://github.com/Jay-Sojitra/stylus-analyzer",
     keywords="stylus, rust, security, smart-contracts, analysis, ai",
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -12,31 +12,17 @@ An AI-powered bug detection tool for Stylus/Rust contracts, similar to Slither f
 
 ## Installation
 
-### From PyPI (not available yet)
-
 ```bash
 pip install stylus-analyzer
 ```
 
-### From Source
-
-```bash
-git clone https://github.com/Jay-Sojitra/stylus-analyzer.git
-cd stylus-analyzer
-pip install -e .
-```
+That's it! The package will be installed with all its dependencies.
 
 ## Configuration
 
-1. Create a `.env` file in your project directory based on the `.env.example`:
+1. Create a `.env` file in your project directory:
 
 ```bash
-cp .env.example .env
-```
-
-2. Edit the `.env` file and add your OpenAI API key:
-
-```
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
@@ -76,6 +62,16 @@ stylus-analyzer analyze-file contracts/MyContract.rs --verbose
 
 # Analyze a specific file with README context
 stylus-analyzer analyze-file contracts/MyContract.rs --readme README.md
+```
+
+## Development
+
+If you want to contribute or modify the code, you can clone the repository:
+
+```bash
+git clone https://github.com/Jay-Sojitra/stylus-analyzer.git
+cd stylus-analyzer
+pip install -e .
 ```
 
 ## Future Extensions
