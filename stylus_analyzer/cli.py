@@ -6,10 +6,13 @@ import sys
 import json
 import click
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
+import time
 
 from stylus_analyzer.ai_analyzer import AIAnalyzer
-from stylus_analyzer.file_utils import collect_project_files, read_file_content, generate_rust_ast, print_rust_ast, find_rust_contracts
+from stylus_analyzer.static_analyzer import StaticAnalyzer
+from stylus_analyzer.file_utils import collect_project_files, read_file_content, find_rust_contracts
+from stylus_analyzer.output_utils import format_analysis_results
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -19,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def cli():
-    """Stylus Analyzer - AI-powered bug detection tool for Stylus/Rust contracts"""
+    """Stylus Analyzer - Bug detection tool for Stylus/Rust contracts"""
     pass
 
 
@@ -30,7 +33,7 @@ def cli():
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 def analyze(project_dir: str, output: Optional[str], model: str, verbose: bool):
     """
-    Analyze Rust contracts in the specified Stylus project directory
+    Analyze Rust contracts in the specified Stylus project directory using AI
     """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -62,7 +65,7 @@ def analyze(project_dir: str, output: Optional[str], model: str, verbose: bool):
 
         # Display results for this contract
         if verbose or not output:
-            click.echo(f"\n===== Analysis for {relative_path} =====")
+            click.echo(f"\n===== AI Analysis for {relative_path} =====")
             if analysis_result["success"]:
                 click.echo(analysis_result["raw_analysis"])
             else:
@@ -83,7 +86,7 @@ def analyze(project_dir: str, output: Optional[str], model: str, verbose: bool):
 @click.option('--model', '-m', type=str, default='gpt-4o-mini', help='OpenAI model to use for analysis')
 def analyze_file(file_path: str, readme: Optional[str], output: Optional[str], model: str):
     """
-    Analyze a single Rust contract file
+    Analyze a single Rust contract file using AI
     """
     logger.info(f"Analyzing file: {file_path}")
 
@@ -129,32 +132,65 @@ def version():
 
 @cli.command()
 @click.argument('target', type=click.Path(exists=True))
-@click.option('--max-depth', type=int, default=10, help='Maximum depth to print for AST nodes')
-def print_ast(target: str, max_depth: int):
+@click.option('--output', '-o', type=click.Path(), help='Output file to save the analysis results')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
+def static_analyze(target: str, output: Optional[str], verbose: bool):
     """
-    Generate and print the AST for a Rust contract file or all contracts in a directory.
+    Perform static analysis on Rust contracts to detect common issues.
+    The target can be a file or a directory.
     """
+    analyzer = StaticAnalyzer()
+    
+    # Track total issues found across all files
+    total_issues = 0
+    
     if os.path.isdir(target):
         contract_files = find_rust_contracts(target)
         if not contract_files:
             click.echo("No Rust contract files found in the directory.")
             return
+        
+        all_results = {}
         for file_path in contract_files:
-            click.echo(f"\n===== AST for {file_path} =====")
+            relative_path = os.path.relpath(file_path, target)
+            click.echo(f"\n===== Static Analysis for {relative_path} =====")
+            
             code = read_file_content(file_path)
             if code:
-                tree = generate_rust_ast(code)
-                print_rust_ast(tree, code, max_depth=max_depth)
+                analysis_result = analyzer.analyze(code)
+                all_results[relative_path] = analysis_result.to_dict()
+                total_issues += len(analysis_result.issues)
+                
+                format_analysis_results(relative_path, analysis_result, verbose)
+                
+                click.echo(f"Analysis completed in {analysis_result.analysis_time:.2f} seconds")
             else:
                 click.echo(f"Could not read file: {file_path}")
+        
+        if output:
+            with open(output, 'w', encoding='utf-8') as f:
+                json.dump(all_results, f, indent=2)
+            logger.info(f"Static analysis results saved to: {output}")
+        
+        # Print summary
+        click.echo(f"\n===== Analysis Summary =====")
+        click.echo(f"Analyzed {len(contract_files)} files")
+        click.echo(f"Found {total_issues} total issues")
     else:
         code = read_file_content(target)
         if not code:
             click.echo(f"Could not read file: {target}")
             return
-        tree = generate_rust_ast(code)
-        click.echo(f"===== AST for {target} =====")
-        print_rust_ast(tree, code, max_depth=max_depth)
+        
+        analysis_result = analyzer.analyze(code)
+        
+        format_analysis_results(target, analysis_result, verbose)
+        click.echo(f"Analysis completed in {analysis_result.analysis_time:.2f} seconds")
+            
+        if output:
+            with open(output, 'w', encoding='utf-8') as f:
+                json.dump(analysis_result.to_dict(), f, indent=2)
+            logger.info(f"Static analysis results saved to: {output}")
 
 
 def main():

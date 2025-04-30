@@ -1,3 +1,3 @@
 """
-Test suite for Stylus Analyzer
+Test package for stylus analyzer
 """ 

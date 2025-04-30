@@ -1,0 +1,25 @@
+{
+  "issues": [
+    {
+      "type": "unchecked_transfer",
+      "severity": "High",
+      "description": "Transfer call with unchecked return value. This can lead to silent failures when transfers fail.",
+      "line_start": 77,
+      "line_end": 77,
+      "code_snippet": "token.transfer(self, to, amount)",
+      "recommendation": "Check the return value of transfer calls or use a function that reverts on failure (like transfer_or_revert)."
+    },
+    {
+      "type": "unchecked_transfer",
+      "severity": "High",
+      "description": "Transfer call with unchecked return value. This can lead to silent failures when transfers fail.",
+      "line_start": 86,
+      "line_end": 86,
+      "code_snippet": "token.transfer(self, to, amount)",
+      "recommendation": "Check the return value of transfer calls or use a function that reverts on failure (like transfer_or_revert)."
+    }
+  ],
+  "total_issues": 2,
+  "errors": [],
+  "analysis_time_seconds": 0.002527952194213867
+}
