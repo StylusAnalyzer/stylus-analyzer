@@ -34,6 +34,11 @@ class BaseDetector:
             return ""
         return code[node.start_byte:node.end_byte]
     
+    # def _get_line_for_node(self, node: Node) -> Tuple[int, int]:
+    #     """Get the start and end line numbers for a node"""
+    #     return node.start_point[0] + 1, node.end_point[0] + 1 
     def _get_line_for_node(self, node: Node) -> Tuple[int, int]:
         """Get the start and end line numbers for a node"""
-        return node.start_point[0] + 1, node.end_point[0] + 1 
+        start_line = node.start_point[0] + 1
+        end_line = node.end_point[0] + 1
+        return start_line, end_line

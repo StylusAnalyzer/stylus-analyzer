@@ -8,6 +8,7 @@ import click
 import logging
 from typing import Optional, Dict, Any
 import time
+import subprocess
 
 from stylus_analyzer.ai_analyzer import AIAnalyzer
 from stylus_analyzer.static_analyzer import StaticAnalyzer
@@ -24,6 +25,20 @@ logger = logging.getLogger(__name__)
 def cli():
     """Stylus Analyzer - Bug detection tool for Stylus/Rust contracts"""
     pass
+
+
+def preprocess_with_cargo_expand(file_path: str) -> Optional[str]:
+    try:
+        result = subprocess.run(
+            ['cargo', 'expand', '--file', file_path],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Failed to expand macros: {e}")
+        return read_file_content(file_path)
 
 
 @cli.command()
@@ -140,38 +155,40 @@ def static_analyze(target: str, output: Optional[str], verbose: bool):
     The target can be a file or a directory.
     """
     analyzer = StaticAnalyzer()
-    
+
     # Track total issues found across all files
     total_issues = 0
-    
+
     if os.path.isdir(target):
         contract_files = find_rust_contracts(target)
         if not contract_files:
             click.echo("No Rust contract files found in the directory.")
             return
-        
+
         all_results = {}
         for file_path in contract_files:
             relative_path = os.path.relpath(file_path, target)
             click.echo(f"\n===== Static Analysis for {relative_path} =====")
-            
+
             code = read_file_content(file_path)
             if code:
-                analysis_result = analyzer.analyze(code)
+                analysis_result = analyzer.analyze(code, file_path)
                 all_results[relative_path] = analysis_result.to_dict()
                 total_issues += len(analysis_result.issues)
-                
-                format_analysis_results(relative_path, analysis_result, verbose)
-                
-                click.echo(f"Analysis completed in {analysis_result.analysis_time:.2f} seconds")
+
+                format_analysis_results(
+                    relative_path, analysis_result, verbose)
+
+                click.echo(
+                    f"Analysis completed in {analysis_result.analysis_time:.2f} seconds")
             else:
                 click.echo(f"Could not read file: {file_path}")
-        
+
         if output:
             with open(output, 'w', encoding='utf-8') as f:
                 json.dump(all_results, f, indent=2)
             logger.info(f"Static analysis results saved to: {output}")
-        
+
         # Print summary
         click.echo(f"\n===== Analysis Summary =====")
         click.echo(f"Analyzed {len(contract_files)} files")
@@ -181,12 +198,13 @@ def static_analyze(target: str, output: Optional[str], verbose: bool):
         if not code:
             click.echo(f"Could not read file: {target}")
             return
-        
-        analysis_result = analyzer.analyze(code)
-        
+
+        analysis_result = analyzer.analyze(code, file_path=target)
+
         format_analysis_results(target, analysis_result, verbose)
-        click.echo(f"Analysis completed in {analysis_result.analysis_time:.2f} seconds")
-            
+        click.echo(
+            f"Analysis completed in {analysis_result.analysis_time:.2f} seconds")
+
         if output:
             with open(output, 'w', encoding='utf-8') as f:
                 json.dump(analysis_result.to_dict(), f, indent=2)

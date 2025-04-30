@@ -79,14 +79,27 @@ impl UncheckedCalls {
         // Did not check if transfer succeeded
         Ok(())
     }
+
+    pub fn unsafee_transfer_via_interface(&mut self, token: IERC20, from: Address, to: Address, amount: U256) -> Result<(), Vec<u8>> {
+
+        let success = token.transferFrom(self, from, to, amount)?;
+        if !success {
+            return Err("ERC20 transfer failed".into());
+        }
+        
+        // Did not check if tran`sfer succeeded
+        Ok(())
+    }
     
     // Safe version using the interface approach
     pub fn safe_transfer_via_interface(&mut self, token: IERC20, to: Address, amount: U256) -> Result<(), Vec<u8>> {
         // Call the transfer method and check its return value
         let success = token.transfer(self, to, amount)?;
-        if !success {
-            return Err("ERC20 transfer failed".into());
-        }
+        token.transfer(self, to, amount)?;
+        // token.transfer(self, to, amount)?;
+        // if !success {
+        //     return Err("ERC20 transfer failed".into());
+        // }
         
         Ok(())
     }
@@ -97,7 +110,7 @@ impl UncheckedCalls {
         match token.transfer(self, to, amount) {
             Ok(_) => {} // Don't check the boolean result
             Err(_) => {} // Ignore any errors
-        }
+        }   
         
         // Continue execution even if transfer failed
         Ok(())
