@@ -4,7 +4,53 @@ Utility functions for file operations in the Stylus Analyzer
 import os
 import glob
 from typing import List, Optional, Dict, Any, Tuple
+import tree_sitter
+from tree_sitter import Language, Parser
 
+# Prepare the Rust parser (downloaded grammar will be required)
+RUST_LANGUAGE = None
+try:
+    # You need to build the language library with the Rust grammar first
+    # e.g. tree-sitter build instructions: https://tree-sitter.github.io/tree-sitter/using-parsers#python
+    Language.build_library(
+        'build/my-languages.so',
+        [
+            'tree-sitter-rust'
+        ]
+    )
+    RUST_LANGUAGE = Language('build/my-languages.so', 'rust')
+except Exception:
+    pass  # If already built, or for runtime only
+
+def get_rust_parser():
+    global RUST_LANGUAGE
+    if RUST_LANGUAGE is None:
+        RUST_LANGUAGE = Language('build/my-languages.so', 'rust')
+    parser = Parser()
+    parser.set_language(RUST_LANGUAGE)
+    return parser
+
+def generate_rust_ast(code: str):
+    """
+    Generate AST for Rust code using tree-sitter
+    """
+    parser = get_rust_parser()
+    tree = parser.parse(bytes(code, "utf8"))
+    return tree
+
+def print_rust_ast(tree, code: str, max_depth: int = 10, _node=None, _depth=0):
+    """
+    Recursively print the AST tree for Rust code
+    """
+    if _node is None:
+        _node = tree.root_node
+    indent = '  ' * _depth
+    print(f"{indent}{_node.type} [{_node.start_point} - {_node.end_point}]")
+    if _depth >= max_depth:
+        print(f"{indent}  ... (max depth reached)")
+        return
+    for child in _node.children:
+        print_rust_ast(tree, code, max_depth, child, _depth + 1)
 
 def find_rust_contracts(directory: str) -> List[str]:
     """

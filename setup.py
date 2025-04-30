@@ -8,6 +8,7 @@ setup(
         "openai>=1.0.0",
          "python-dotenv>=1.0.0",
             "click>=8.0.0",
+            "tree-sitter>=0.20.0",
     ],
     entry_points={
         "console_scripts": [
