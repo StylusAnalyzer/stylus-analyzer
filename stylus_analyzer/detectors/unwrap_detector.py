@@ -82,11 +82,10 @@ class UnwrapDetector(BaseDetector):
         """Extract the function name from a function node"""
         if not node:
             return "unknown"
-
+            
         # For Rust functions
         for child in node.children:
             if child.type == "identifier":
                 return self._get_node_text(child, code)
         
-        # If no identifier was found
         return "unknown" 

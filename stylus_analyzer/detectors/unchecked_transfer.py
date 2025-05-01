@@ -85,9 +85,6 @@ class UncheckedTransferDetector(BaseDetector):
             
             # Check for unchecked transfer calls
             self._find_solidity_unchecked_transfers(section_code, section_start_line, results)
-            
-            # Also check specifically for predefined unsafe transfer functions
-            self._find_predefined_unsafe_transfers(section_code, section_start_line, results)
     
     def _extract_sol_macro_sections(self, code: str) -> list:
         """Extract sections of code within sol! macros"""
@@ -175,54 +172,6 @@ class UncheckedTransferDetector(BaseDetector):
                                 recommendation="Check the return value using `(bool success, bytes memory returnData) = ...` and verify success with require."
                             )
     
-    def _find_predefined_unsafe_transfers(self, code: str, start_line: int, results) -> None:
-        """Find predefined unsafe transfer functions in Solidity code"""
-        lines = code.split('\n')
-        unsafe_functions = ["unsafeTransferERC20", "unsafeTransferFromERC20"]
-        
-        for i, line in enumerate(lines):
-            line_num = start_line + i
-            
-            # Check for function declaration of known unsafe transfer functions
-            for unsafe_func in unsafe_functions:
-                if f"function {unsafe_func}" in line:
-                    func_line = line_num
-                    call_line = None
-                    call_text = ""
-                    
-                    # Find the start of the function body
-                    while i < len(lines) and "{" not in lines[i]:
-                        i += 1
-                    
-                    if i < len(lines):
-                        # Look for the .call statement in the next few lines
-                        brace_count = lines[i].count("{")
-                        search_limit = min(i + 15, len(lines))  # Look at most 15 lines ahead
-                        
-                        for j in range(i, search_limit):
-                            if j < len(lines):
-                                current_line = lines[j]
-                                if ".call(" in current_line and "transfer" in current_line:
-                                    call_line = start_line + j
-                                    call_text = current_line.strip()
-                                    break
-                                
-                                # Update brace count
-                                brace_count += current_line.count("{") - current_line.count("}")
-                                if brace_count == 0:
-                                    break  # End of function
-                    
-                    if call_line:
-                        results.add_issue(
-                            issue_type="unchecked_transfer",
-                            severity="High",
-                            description=f"Solidity function '{unsafe_func}' (line {func_line}) uses unchecked transfer call. Return value is not checked.",
-                            line_start=call_line,
-                            line_end=call_line,
-                            code_snippet=call_text,
-                            recommendation="Check the return value: `(bool success, bytes memory returnData) = token.call(...); require(success, ...)`"
-                        )
-    
     def _is_token_interface_call(self, node: Node, code: str) -> bool:
         """Check if this is a call to an ERC20 token interface method"""
         call_text = self._get_node_text(node, code)
@@ -242,126 +191,149 @@ class UncheckedTransferDetector(BaseDetector):
         """Check if the return value of a token transfer call is properly checked"""
         parent = node.parent
         
-        # Handle direct statement (e.g., `let _ = token.transfer(...)`)
+        # Handle direct statement (e.g., `token.transfer(...)` without assignment)
         if parent.type == "expression_statement":
             expr_text = self._get_node_text(parent, code)
             if "let _ =" in expr_text:
                 return False
             if not expr_text.strip().startswith("let"):
                 return False
-        
-        # Check if it's part of a let binding
-        while parent and parent.type != "block":
-            parent_text = self._get_node_text(parent, code)
             
-            if parent.type == "let_declaration" and ".transfer" in parent_text:
-                var_name = None
-                for child in parent.children:
-                    if child.type == "identifier":
-                        var_name = self._get_node_text(child, code)
+            # Look ahead in code to see if the result is checked
+            function_node = self._find_parent_function(node)
+            if function_node:
+                function_text = self._get_node_text(function_node, code)
+                function_lines = function_text.splitlines()
+                
+                # Find the line containing our call
+                call_text = self._get_node_text(node, code)
+                call_line_idx = -1
+                for i, line in enumerate(function_lines):
+                    if call_text in line:
+                        call_line_idx = i
                         break
                 
-                if var_name and var_name != "_":
-                    # Get the full function context
-                    function_node = self._find_parent_function(node)
-                    if function_node:
-                        function_text = self._get_node_text(function_node, code)
-                        
-                        # Check for commented-out validation code
-                        if (f"// if !{var_name}" in function_text or 
-                            f"// if {var_name}" in function_text or 
-                            f"// require({var_name}" in function_text):
-                            
-                            # This function has commented-out validation, which indicates
-                            # the developer intentionally skipped validation
-                            return False
-                        
-                        # Check for return statements that just pass the value without validation
-                        lines = function_text.split('\n')
-                        for line in lines:
-                            if f"return {var_name}" in line and "if" not in line and "require" not in line:
-                                # The variable is returned without validation
-                                return False
-                        
-                        # Look for actual validation code
-                        if (f"if !{var_name}" in function_text or 
-                            f"if {var_name}" in function_text or 
-                            f"require({var_name}" in function_text):
+                if call_line_idx >= 0 and call_line_idx < len(function_lines) - 1:
+                    # Look at the next few lines for an if statement checking the result
+                    for i in range(call_line_idx + 1, min(call_line_idx + 5, len(function_lines))):
+                        if "if" in function_lines[i] and any(x in function_lines[i] for x in ["success", "result", "!"]):
                             return True
-                    
-                    # Look for validation in following statements
-                    sibling = parent.next_sibling 
-                    while sibling:
-                        sibling_text = self._get_node_text(sibling, code)
-                        if var_name in sibling_text:
-                            if (f"if !{var_name}" in sibling_text or 
-                                f"if {var_name}" in sibling_text or 
-                                f"require({var_name}" in sibling_text):
-                                return True
-                        sibling = sibling.next_sibling
-                    
-                    # If we get here, the variable exists but is not properly checked
-                    return False
-                elif var_name == "_":
-                    return False
+        
+        # Handle assignment (let success = token.transfer(...))
+        elif parent.type == "assignment_expression" or parent.type == "let_declaration":
+            let_text = self._get_node_text(parent, code)
+            variable_name = let_text.split("=")[0].strip().replace("let", "").strip()
             
-            if parent.type == "if_expression" and parent.child_by_field_name("condition") == node:
-                return True
-            if parent.type == "return_expression":
-                # Check if this is a direct return without validation
-                return_text = self._get_node_text(parent, code)
-                if "if" in return_text or "require" in return_text:
-                    return True
+            if variable_name == "_":
                 return False
             
-            parent = parent.parent
+            # Look ahead for if statement checking the variable
+            function_node = self._find_parent_function(node)
+            if function_node:
+                function_text = self._get_node_text(function_node, code)
+                function_lines = function_text.splitlines()
+                
+                # Find the line containing our assignment
+                let_line_idx = -1
+                for i, line in enumerate(function_lines):
+                    if let_text in line:
+                        let_line_idx = i
+                        break
+                
+                if let_line_idx >= 0 and let_line_idx < len(function_lines) - 1:
+                    # Look for an if statement checking the variable
+                    for i in range(let_line_idx + 1, min(let_line_idx + 10, len(function_lines))):
+                        if f"if {variable_name}" in function_lines[i] or f"if !{variable_name}" in function_lines[i]:
+                            return True
         
-        return False
-    
-    def _is_call_result_checked(self, node: Node, code: str) -> bool:
-        """Check if the result of a low-level call is checked"""
-        parent = node.parent
-        
-        if parent.type == "expression_statement":
-            return False
-        
-        while parent and parent.type != "function_item":
-            parent_text = self._get_node_text(parent, code)
-            if "(bool success," in parent_text or "bool success" in parent_text:
+        # Handle question mark operator (e.g., token.transfer(...)?)
+        elif parent.type == "try_expression":
+            # The ? operator only handles errors, not the boolean success value
+            # We need to check if the return value of this expression is used in a condition
+            grand_parent = parent.parent
+            
+            # Check if the try expression is part of an assignment or variable declaration
+            if grand_parent.type == "let_declaration" or grand_parent.type == "assignment_expression":
+                let_text = self._get_node_text(grand_parent, code)
+                variable_name = let_text.split("=")[0].strip().replace("let", "").strip()
+                
+                if variable_name == "_":
+                    return False
+                
+                # Look for checks using this variable
                 function_node = self._find_parent_function(node)
                 if function_node:
                     function_text = self._get_node_text(function_node, code)
-                    if "require(success" in function_text or "if success" in function_text or "if !success" in function_text:
+                    if f"if {variable_name}" in function_text or f"if !{variable_name}" in function_text:
                         return True
-            parent = parent.parent
+                
+                return False
+            
+            # If the try expression isn't assigned to a variable, it's likely unchecked
+            # This is for cases like: `token.transfer(self, to, amount)?;`
+            return False
+        
+        # Check for conditional or match
+        elif parent.type == "if_expression" or parent.type == "match_expression":
+            return True
+        
+        return False
+        
+    def _is_call_result_checked(self, node: Node, code: str) -> bool:
+        """Check if a function call result is checked"""
+        parent = node.parent
+        
+        # If it's directly in a let binding or assignment
+        if parent.type == "let_declaration" or parent.type == "assignment_expression":
+            # Check if the variable is used in a condition later
+            return self._is_return_value_checked(node, code)
+        
+        # If it's already in a condition
+        elif parent.type == "if_expression" or parent.type == "match_expression":
+            return True
+        
+        # Check for ? operator
+        elif parent.type == "try_expression":
+            # For low-level calls, the ? only propagates errors but doesn't check success
+            return False
         
         return False
     
     def _is_transfer_error_ignored(self, node: Node, code: str) -> bool:
-        """Check if a match expression ignores transfer errors"""
-        for child in node.children:
-            if child.type == "match_arm" and "Err" in self._get_node_text(child, code):
-                arm_text = self._get_node_text(child, code)
-                if "=> {}" in arm_text.replace(" ", "") or "=>{}" in arm_text.replace(" ", ""):
-                    return True
-                if "return" in arm_text or "revert" in arm_text:
-                    return False
-        return False
+        """Check if transfer errors are explicitly caught and ignored"""
+        match_text = self._get_node_text(node, code)
+        return "transfer" in match_text and (
+            ("Err(_) => {}" in match_text) or 
+            ("Err(_) => ()" in match_text) or
+            ("Err(_) => Ok(())" in match_text)
+        )
     
     def _find_parent_function(self, node: Node) -> Optional[Node]:
-        """Find the parent function or method definition"""
-        parent = node.parent
-        while parent:
-            if parent.type in ["function_item", "impl_item"]:
-                return parent
-            parent = parent.parent
-        return None
+        """Find the parent function node"""
+        current = node
+        while current.parent and current.type != "function_item":
+            current = current.parent
+        return current if current.type == "function_item" else None
     
     def _get_function_signature(self, node: Node, code: str) -> str:
-        """Get a simplified function signature for display in results"""
-        function_node = self._find_parent_function(node)
-        if function_node:
-            for child in function_node.children:
-                if child.type == "identifier":
-                    return f"fn {self._get_node_text(child, code)}"
-        return self._get_node_text(node, code).split("\n")[0]
+        """Get the function signature from a function node"""
+        if node.type != "function_item":
+            return ""
+        
+        signature = ""
+        for child in node.children:
+            if child.type == "block":
+                break
+            signature += self._get_node_text(child, code)
+        
+        return signature.strip()
+    
+    def _get_line_for_node(self, node: Node) -> tuple:
+        """Get the line number for a node (1-indexed)"""
+        return node.start_point[0] + 1, node.end_point[0] + 1
+    
+    def _get_node_text(self, node: Node, code: str) -> str:
+        """Get the text of a node from the code"""
+        if node.start_byte < 0 or node.end_byte > len(code) or node.start_byte >= node.end_byte:
+            return ""
+        return code[node.start_byte:node.end_byte]

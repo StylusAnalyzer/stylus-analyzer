@@ -8,7 +8,8 @@ A tool for analyzing Stylus/Rust smart contracts for security issues and bugs.
 - AI-powered contract analysis using OpenAI models
 - Static analysis to detect common vulnerabilities
   - Unchecked transfer vulnerabilities
-  - Unsafe transfers to potentially malicious addresses
+  - Unsafe panic!() and unwrap() calls
+  - Unsafe ABI encoding operations
   - Extensible detector system for easily adding new vulnerability checks
 
 ## Installation
@@ -43,8 +44,14 @@ stylus-analyzer static-analyze test_contracts/unsafe_transfer_example.rs
 # Analyze all contracts in a directory
 stylus-analyzer static-analyze test_contracts/
 
-# Save results to a file
+# Save results to a JSON file
 stylus-analyzer static-analyze test_contracts/ -o analysis_results.json
+
+# Save results to a PDF report
+stylus-analyzer static-analyze test_contracts/ -p analysis_report.pdf
+
+# Save results in both JSON and PDF formats
+stylus-analyzer static-analyze test_contracts/ -o analysis_results.json -p analysis_report.pdf
 
 # Show detailed output including code snippets
 stylus-analyzer static-analyze test_contracts/ --verbose
@@ -52,7 +59,9 @@ stylus-analyzer static-analyze test_contracts/ --verbose
 
 The static analyzer will check for various issues including:
 - Unchecked transfer return values that can lead to silent failures
-- Unsafe transfers to potentially malicious addresses
+- Unsafe panic!() macro calls that cause immediate termination
+- Unsafe unwrap() calls that may cause panics
+- Unsafe encode_packed operations with dynamic types that may cause hash collisions
 - More detectors can be added by extending the framework
 
 ### AI Analysis
@@ -192,8 +201,11 @@ This project is licensed under the terms of the MIT license.
 ### Unchecked Transfer
 Detects unchecked transfer calls where the return value is not properly checked. This can lead to silent failures where token transfers fail but the contract continues execution as if they succeeded.
 
-### Unsafe Transfer
-Detects potentially unsafe transfers to unvalidated addresses, which could lead to funds being sent to malicious contracts or incorrect addresses.
-
 ### Unsafe Unwrap
-Detects uses of `.unwrap()` in Rust code, which can cause runtime panics if the value is None or Err. In a blockchain context, panics can cause transactions to fail and may lead to loss of funds or unexpected behavior. Instead, developers should use pattern matching, the `?` operator, or other explicit error handling techniques. 
+Detects uses of `.unwrap()` in Rust code, which can cause runtime panics if the value is None or Err. In a blockchain context, panics can cause transactions to fail and may lead to loss of funds or unexpected behavior. Instead, developers should use pattern matching, the `?` operator, or other explicit error handling techniques.
+
+### Unsafe Panic
+Detects uses of `panic!()` macro in Rust code, which causes immediate termination that cannot be caught or recovered from. In a blockchain context, this will cause the entire transaction to fail with no way to handle the error gracefully. Developers should use Result/Option types with explicit error handling instead.
+
+### Unsafe Encode Packed
+Detects potentially unsafe uses of `encode_packed` with dynamic types like strings. When used with dynamic types without delimiters, different inputs can produce the same packed result (e.g., `encode_packed("a", "bc") == encode_packed("ab", "c")`), which can lead to hash collisions. This is particularly problematic when the packed result is used for signatures, authentication, or as a unique identifier. Developers should use regular `encode` which adds padding, use fixed-size types with `encode_packed`, or add delimiters between dynamic values.

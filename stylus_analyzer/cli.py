@@ -13,7 +13,7 @@ import subprocess
 from stylus_analyzer.ai_analyzer import AIAnalyzer
 from stylus_analyzer.static_analyzer import StaticAnalyzer
 from stylus_analyzer.file_utils import collect_project_files, read_file_content, find_rust_contracts
-from stylus_analyzer.output_utils import format_analysis_results
+from stylus_analyzer.output_utils import format_analysis_results, generate_pdf_report
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -43,7 +43,7 @@ def preprocess_with_cargo_expand(file_path: str) -> Optional[str]:
 
 @cli.command()
 @click.argument('project_dir', type=click.Path(exists=True, file_okay=False, dir_okay=True), default='.')
-@click.option('--output', '-o', type=click.Path(), help='Output file to save the analysis results')
+@click.option('--output', '-o', type=click.Path(), help='Output file to save the analysis results as JSON')
 @click.option('--model', '-m', type=str, default='gpt-4o-mini', help='OpenAI model to use for analysis')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 def analyze(project_dir: str, output: Optional[str], model: str, verbose: bool):
@@ -147,9 +147,10 @@ def version():
 
 @cli.command()
 @click.argument('target', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), help='Output file to save the analysis results')
+@click.option('--output', '-o', type=click.Path(), help='Output file to save the analysis results as JSON')
+@click.option('--pdf', '-p', type=click.Path(), help='Output file to save the analysis results as PDF')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def static_analyze(target: str, output: Optional[str], verbose: bool):
+def static_analyze(target: str, output: Optional[str], pdf: Optional[str], verbose: bool):
     """
     Perform static analysis on Rust contracts to detect common issues.
     The target can be a file or a directory.
@@ -188,6 +189,9 @@ def static_analyze(target: str, output: Optional[str], verbose: bool):
             with open(output, 'w', encoding='utf-8') as f:
                 json.dump(all_results, f, indent=2)
             logger.info(f"Static analysis results saved to: {output}")
+            
+        if pdf:
+            generate_pdf_report(all_results, pdf)
 
         # Print summary
         click.echo(f"\n===== Analysis Summary =====")
@@ -209,6 +213,9 @@ def static_analyze(target: str, output: Optional[str], verbose: bool):
             with open(output, 'w', encoding='utf-8') as f:
                 json.dump(analysis_result.to_dict(), f, indent=2)
             logger.info(f"Static analysis results saved to: {output}")
+            
+        if pdf:
+            generate_pdf_report(analysis_result, pdf)
 
 
 def main():

@@ -2,7 +2,7 @@
 
 ## Overview
 
-We've added a static analysis feature to the Stylus Analyzer tool for detecting common vulnerabilities in Stylus/Rust smart contracts. The implementation focuses on detecting unchecked transfers and unsafe transfer patterns, with a modular design that allows for easy extension with additional detectors in the future.
+We've added a static analysis feature to the Stylus Analyzer tool for detecting common vulnerabilities in Stylus/Rust smart contracts. The implementation focuses on detecting unchecked transfers and unsafe Rust constructs, with a modular design that allows for easy extension with additional detectors in the future.
 
 ## Architecture
 
@@ -11,7 +11,9 @@ The static analyzer consists of the following components:
 1. **Base Detector**: An abstract base class that defines the interface for all detectors.
 2. **Specific Detectors**: Implementations of the base detector that look for specific issues:
    - `UncheckedTransferDetector`: Finds instances where transfer return values are not checked
-   - `UnsafeTransferDetector`: Identifies transfers to potentially unsafe or unvalidated addresses
+   - `UnwrapDetector`: Identifies potentially dangerous uses of .unwrap() that can panic
+   - `PanicDetector`: Identifies explicit panic!() macro calls which cause immediate termination
+   - `EncodePackedDetector`: Identifies unsafe use of encode_packed with dynamic types that could lead to hash collisions
 3. **Static Analyzer**: Main class that coordinates the analysis process and manages detectors
 4. **CLI Integration**: Command-line interface for running the static analysis
 
@@ -28,7 +30,9 @@ stylus_analyzer/
 │   ├── __init__.py (registry of available detectors)
 │   ├── detector_base.py (base detector class)
 │   ├── unchecked_transfer.py (detector for unchecked transfers)
-│   └── unsafe_transfer.py (detector for unsafe transfers)
+│   ├── unwrap_detector.py (detector for unwrap calls)
+│   ├── panic_detector.py (detector for panic! macro calls)
+│   └── encode_packed_detector.py (detector for unsafe encode_packed usage)
 └── tests/
     ├── __init__.py
     └── test_static_analyzer.py

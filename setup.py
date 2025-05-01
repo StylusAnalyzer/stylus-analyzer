@@ -9,6 +9,7 @@ setup(
          "python-dotenv>=1.0.0",
             "click>=8.0.0",
             "tree-sitter>=0.20.0",
+            "reportlab>=3.6.0",  # For PDF generation
     ],
     entry_points={
         "console_scripts": [

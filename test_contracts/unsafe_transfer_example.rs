@@ -21,52 +21,52 @@ sol_interface! {
     }
 }
 
-sol! {
-    #[sol(name = "UncheckedCalls")]
-    contract UncheckedCalls {
-        // State variables
-        address public owner;
+// sol! {
+//     #[sol(name = "UncheckedCalls")]
+//     contract UncheckedCalls {
+//         // State variables
+//         address public owner;
         
-        // Constructor
-        constructor() {
-            owner = msg.sender;
-        }
+//         // Constructor
+//         constructor() {
+//             owner = msg.sender;
+//         }
         
-        // Modifier
-        modifier onlyOwner() {
-            require(msg.sender == owner, "Not owner");
-            _;
-        }
+//         // Modifier
+//         modifier onlyOwner() {
+//             require(msg.sender == owner, "Not owner");
+//             _;
+//         }
         
-        // VULNERABILITY 1: Unchecked external ERC20 transfer
-        // This function doesn't check the return value of the transfer call
-        function unsafeTransferERC20(address token, address to, uint256 amount) public {
-            // Low-level call without checking return value
-            token.call(abi.encodeWithSignature("transfer(address,uint256)", to, amount));
+//         // VULNERABILITY 1: Unchecked external ERC20 transfer
+//         // This function doesn't check the return value of the transfer call
+//         function unsafeTransferERC20(address token, address to, uint256 amount) public {
+//             // Low-level call without checking return value
+//             token.call(abi.encodeWithSignature("transfer(address,uint256)", to, amount));
             
-            // The transfer might have failed silently
-        }
+//             // The transfer might have failed silently
+//         }
         
-        // Safe version that checks the return value
-        function safeTransferERC20(address token, address to, uint256 amount) public {
-            // Make call and check return value
-            (bool success, bytes memory returnData) = token.call(abi.encodeWithSignature("transfer(address,uint256)", to, amount));
-            require(success && (returnData.length == 0 || abi.decode(returnData, (bool))), "ERC20 transfer failed");
-        }
+//         // Safe version that checks the return value
+//         function safeTransferERC20(address token, address to, uint256 amount) public {
+//             // Make call and check return value
+//             (bool success, bytes memory returnData) = token.call(abi.encodeWithSignature("transfer(address,uint256)", to, amount));
+//             require(success && (returnData.length == 0 || abi.decode(returnData, (bool))), "ERC20 transfer failed");
+//         }
         
-        // VULNERABILITY 2: Another type of unchecked transfer with transferFrom
-        function unsafeTransferFromERC20(address token, address from, address to, uint256 amount) public {
-            token.call(abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, amount));
-            // Again, no return value check
-        }
+//         // VULNERABILITY 2: Another type of unchecked transfer with transferFrom
+//         function unsafeTransferFromERC20(address token, address from, address to, uint256 amount) public {
+//             token.call(abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, amount));
+//             // Again, no return value check
+//         }
         
-        // Receive function to handle ETH transfers
-        receive() external payable {}
+//         // Receive function to handle ETH transfers
+//         receive() external payable {}
         
-        // Fallback function
-        fallback() external payable {}
-    }
-}
+//         // Fallback function
+//         fallback() external payable {}
+//     }
+// }
 
 // Implementation using the Stylus SDK interface approach
 #[public]
@@ -75,19 +75,14 @@ impl UncheckedCalls {
     pub fn unsafe_transfer_via_interface(&mut self, token: IERC20, to: Address, amount: U256) -> Result<(), Vec<u8>> {
         // Call the transfer method but ignore its boolean return value
         let _ = token.transfer(self, to, amount);
-        
         // Did not check if transfer succeeded
+        let success = token.transfer(self, to, amount)?;
         Ok(())
     }
 
-    pub fn unsafee_transfer_via_interface(&mut self, token: IERC20, from: Address, to: Address, amount: U256) -> Result<(), Vec<u8>> {
+    pub fn unsafe_transfer_from_via_interface(&mut self, token: IERC20, from: Address, to: Address, amount: U256) -> Result<(), Vec<u8>> {
 
         let success = token.transferFrom(self, from, to, amount)?;
-        if !success {
-            return Err("ERC20 transfer failed".into());
-        }
-        
-        // Did not check if tran`sfer succeeded
         Ok(())
     }
     
@@ -96,10 +91,9 @@ impl UncheckedCalls {
         // Call the transfer method and check its return value
         let success = token.transfer(self, to, amount)?;
         token.transfer(self, to, amount)?;
-        // token.transfer(self, to, amount)?;
-        // if !success {
-        //     return Err("ERC20 transfer failed".into());
-        // }
+        if !success {
+            return Err("ERC20 transfer failed".into());
+        }
         
         Ok(())
     }
@@ -124,11 +118,11 @@ fn alloc_error(_: core::alloc::Layout) -> ! {
     evm::revert(b"alloc error")
 }
 
-#[no_mangle]
-extern "C" fn deploy() {
-    let contract = UncheckedCalls::constructor();
-    evm::deploy(contract);
-}
+// #[no_mangle]
+// extern "C" fn deploy() {
+//     let contract = UncheckedCalls::constructor();
+//     evm::deploy(contract);
+// }
 
 #[no_mangle]
 extern "C" fn main() {

@@ -15,8 +15,9 @@ stylus_analyzer.egg-info/requires.txt
 stylus_analyzer.egg-info/top_level.txt
 stylus_analyzer/detectors/__init__.py
 stylus_analyzer/detectors/detector_base.py
+stylus_analyzer/detectors/encode_packed_detector.py
+stylus_analyzer/detectors/panic_detector.py
 stylus_analyzer/detectors/unchecked_transfer.py
-stylus_analyzer/detectors/unsafe_transfer.py
 stylus_analyzer/detectors/unwrap_detector.py
 stylus_analyzer/tests/__init__.py
 stylus_analyzer/tests/test_ai_analyzer.py

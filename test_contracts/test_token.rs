@@ -34,12 +34,7 @@ sol! {
             name = _name;
             symbol = _symbol;
             decimals = _decimals;
-            totalSupply = _initialSupply * 10 ** uint256(_decimals);
-            
-            // POTENTIAL BUG: No owner assignment
-            // owner = msg.sender;
-            
-            // Assign all tokens to the deployer
+            totalSupply = _initialSupply * 10 ** uint256(_decimals);    
             balanceOf[msg.sender] = totalSupply;
             
             emit Transfer(address(0), msg.sender, totalSupply);
