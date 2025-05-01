@@ -4,6 +4,7 @@ Tests for the static analyzer
 import os
 import unittest
 from pathlib import Path
+import tree_sitter
 
 from stylus_analyzer.static_analyzer import StaticAnalyzer
 

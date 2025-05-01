@@ -1,0 +1,11 @@
+[package]
+name = "my_stylus_contract"
+version = "0.1.0"
+edition = "2021"
+
+# Dependencies for the project
+[dependencies]
+stylus-sdk = { version = "0.6.0", features = ["reentrant"] }
+
+# Optional: Other dependencies can be added here
+# another-dependency = "1.0"

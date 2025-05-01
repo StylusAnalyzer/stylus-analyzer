@@ -5,6 +5,7 @@ import logging
 from typing import Dict, List, Optional, Any, Set, Tuple
 import time
 import subprocess
+import os
 
 
 from stylus_analyzer.file_utils import generate_rust_ast, read_file_content
@@ -143,4 +144,31 @@ class StaticAnalyzer:
 
         # Record analysis time
         results.analysis_time = time.time() - start_time
+
+        # Check for reentrancy feature
+        if self.check_reentrancy_feature(os.path.dirname(file_path)):
+            results.add_issue(
+                "reentrancy_feature",
+                "Warning",
+                "Reentrancy feature is enabled for stylus-sdk.",
+                0,
+                0,
+                "",
+                "Consider using the reentrant feature with caution."
+            )
+
         return results
+
+    def check_reentrancy_feature(self, directory: str) -> bool:
+        """Check if the stylus-sdk dependency with reentrant feature is present in Cargo.toml."""
+        cargo_toml_path = os.path.join(directory, 'Cargo.toml')
+        
+        if not os.path.exists(cargo_toml_path):
+            return False  # No Cargo.toml found
+        
+        with open(cargo_toml_path, 'r') as file:
+            for line in file:
+                if 'stylus-sdk' in line and 'features' in line:
+                    if 'reentrant' in line:
+                        return True  # Found stylus-sdk with reentrant feature
+        return False  # Not found
