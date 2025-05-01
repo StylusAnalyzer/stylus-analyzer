@@ -186,3 +186,14 @@ pytest
 ## License
 
 This project is licensed under the terms of the MIT license. 
+
+## Detectors
+
+### Unchecked Transfer
+Detects unchecked transfer calls where the return value is not properly checked. This can lead to silent failures where token transfers fail but the contract continues execution as if they succeeded.
+
+### Unsafe Transfer
+Detects potentially unsafe transfers to unvalidated addresses, which could lead to funds being sent to malicious contracts or incorrect addresses.
+
+### Unsafe Unwrap
+Detects uses of `.unwrap()` in Rust code, which can cause runtime panics if the value is None or Err. In a blockchain context, panics can cause transactions to fail and may lead to loss of funds or unexpected behavior. Instead, developers should use pattern matching, the `?` operator, or other explicit error handling techniques. 

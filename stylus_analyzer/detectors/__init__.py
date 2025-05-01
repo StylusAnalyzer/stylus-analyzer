@@ -12,6 +12,7 @@ from pathlib import Path
 from stylus_analyzer.detectors.detector_base import BaseDetector
 from stylus_analyzer.detectors.unchecked_transfer import UncheckedTransferDetector
 from stylus_analyzer.detectors.unsafe_transfer import UnsafeTransferDetector
+from stylus_analyzer.detectors.unwrap_detector import UnwrapDetector
 
 # Logger for this module
 logger = logging.getLogger(__name__)
@@ -19,7 +20,8 @@ logger = logging.getLogger(__name__)
 # List of all available detectors
 AVAILABLE_DETECTORS = [
     UncheckedTransferDetector,
-    UnsafeTransferDetector
+    UnsafeTransferDetector,
+    UnwrapDetector
 ]
 
 def get_available_detectors() -> List[Type[BaseDetector]]:
