@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: stylus-analyzer
-Version: 0.1.2
+Version: 0.1.7
 Summary: AI-powered bug detection tool for Stylus/Rust contracts
 Home-page: https://github.com/Jay-Sojitra/stylus-analyzer
 Author: Jay Sojitra
@@ -21,7 +21,7 @@ Requires-Dist: openai>=1.0.0
 Requires-Dist: python-dotenv>=1.0.0
 Requires-Dist: click>=8.0.0
 Requires-Dist: tree-sitter>=0.20.0
-Requires-Dist: reportlab>=3.6.0
+Requires-Dist: setuptools>=42.0.0
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier
@@ -40,12 +40,11 @@ A tool for analyzing Stylus/Rust smart contracts for security issues and bugs.
 
 ## Features
 
-- AST generation and visualization for Rust contracts
 - AI-powered contract analysis using OpenAI models
 - Static analysis to detect common vulnerabilities
   - Unchecked transfer vulnerabilities
   - Unsafe panic!() and unwrap() calls
-  - Unsafe encode_packed() usage that can lead to hash collisions
+  - Unsafe ABI encoding operations
   - Extensible detector system for easily adding new vulnerability checks
 
 ## Installation
@@ -60,7 +59,7 @@ For development or the latest features, you can install from the source:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/stylus-analyzer.git
+git clone https://github.com/StylusAnalyzer/stylus-analyzer.git
 cd stylus-analyzer
 
 # Install the package in development mode
@@ -97,7 +96,7 @@ The static analyzer will check for various issues including:
 - Unchecked transfer return values that can lead to silent failures
 - Unsafe panic!() macro calls that cause immediate termination
 - Unsafe unwrap() calls that may cause panics
-- Unsafe encode_packed() usage that can lead to hash collisions
+- Unsafe encode_packed operations with dynamic types that may cause hash collisions
 - More detectors can be added by extending the framework
 
 ### AI Analysis
@@ -116,18 +115,6 @@ stylus-analyzer analyze path/to/project
 
 # Save results to a file
 stylus-analyzer analyze path/to/project -o analysis_results.json
-```
-
-### AST Visualization
-
-To visualize the Abstract Syntax Tree (AST) of Rust contracts:
-
-```bash
-# Print AST for a Rust file
-stylus-analyzer print-ast test_contracts/test_token.rs
-
-# Control the depth of the printed AST
-stylus-analyzer print-ast test_contracts/test_token.rs --max-depth 5
 ```
 
 ## Custom Detectors
@@ -211,7 +198,7 @@ Contributions to Stylus Analyzer are welcome! Here's how you can contribute:
 
 ```bash
 # Clone your fork
-git clone https://github.com/your-username/stylus-analyzer.git
+git clone https://github.com/StylusAnalyzer/stylus-analyzer.git
 cd stylus-analyzer
 
 # Create and activate a virtual environment (optional but recommended)
@@ -220,9 +207,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install in development mode
 pip install -e .
-
-# Install development dependencies
-pip install -r requirements-dev.txt
 
 # Run tests
 pytest
@@ -244,4 +228,4 @@ Detects uses of `.unwrap()` in Rust code, which can cause runtime panics if the 
 Detects uses of `panic!()` macro in Rust code, which causes immediate termination that cannot be caught or recovered from. In a blockchain context, this will cause the entire transaction to fail with no way to handle the error gracefully. Developers should use Result/Option types with explicit error handling instead.
 
 ### Unsafe Encode Packed
-Detects uses of `encode_packed()` or `abi.encodePacked()` in contract code, which can lead to hash collisions since it concatenates values without padding. For example, `encode_packed("a", "bc") == encode_packed("ab", "c")`, which is especially dangerous when used with hash functions or signatures. Use `encode()` instead when dealing with dynamic-length data.
+Detects potentially unsafe uses of `encode_packed` with dynamic types like strings. When used with dynamic types without delimiters, different inputs can produce the same packed result (e.g., `encode_packed("a", "bc") == encode_packed("ab", "c")`), which can lead to hash collisions. This is particularly problematic when the packed result is used for signatures, authentication, or as a unique identifier. Developers should use regular `encode` which adds padding, use fixed-size types with `encode_packed`, or add delimiters between dynamic values.

@@ -4,7 +4,6 @@ A tool for analyzing Stylus/Rust smart contracts for security issues and bugs.
 
 ## Features
 
-- AST generation and visualization for Rust contracts
 - AI-powered contract analysis using OpenAI models
 - Static analysis to detect common vulnerabilities
   - Unchecked transfer vulnerabilities
@@ -24,7 +23,7 @@ For development or the latest features, you can install from the source:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/stylus-analyzer.git
+git clone https://github.com/StylusAnalyzer/stylus-analyzer.git
 cd stylus-analyzer
 
 # Install the package in development mode
@@ -80,18 +79,6 @@ stylus-analyzer analyze path/to/project
 
 # Save results to a file
 stylus-analyzer analyze path/to/project -o analysis_results.json
-```
-
-### AST Visualization
-
-To visualize the Abstract Syntax Tree (AST) of Rust contracts:
-
-```bash
-# Print AST for a Rust file
-stylus-analyzer print-ast test_contracts/test_token.rs
-
-# Control the depth of the printed AST
-stylus-analyzer print-ast test_contracts/test_token.rs --max-depth 5
 ```
 
 ## Custom Detectors
@@ -175,7 +162,7 @@ Contributions to Stylus Analyzer are welcome! Here's how you can contribute:
 
 ```bash
 # Clone your fork
-git clone https://github.com/your-username/stylus-analyzer.git
+git clone https://github.com/StylusAnalyzer/stylus-analyzer.git
 cd stylus-analyzer
 
 # Create and activate a virtual environment (optional but recommended)
@@ -184,9 +171,6 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install in development mode
 pip install -e .
-
-# Install development dependencies
-pip install -r requirements-dev.txt
 
 # Run tests
 pytest

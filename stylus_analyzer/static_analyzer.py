@@ -150,13 +150,12 @@ class StaticAnalyzer:
             results.add_issue(
                 "reentrancy_feature",
                 "Warning",
-                "Reentrancy feature is enabled for stylus-sdk.",
+                "Reentrancy feature is disabled for stylus-sdk.",
                 0,
                 0,
                 "",
-                "Consider using the reentrant feature with caution."
+                "Consider removing the reentrant feature with caution."
             )
-
         return results
 
     def check_reentrancy_feature(self, directory: str) -> bool:

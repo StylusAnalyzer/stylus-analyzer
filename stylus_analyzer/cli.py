@@ -168,13 +168,13 @@ def static_analyze(target: str, output: Optional[str], pdf: Optional[str], verbo
         if analyzer.check_reentrancy_feature(target):
             click.echo("\nHigh severity issues:")
             click.echo("  [1] Reentrancy feature status")
-            click.echo("      Status: NOT enabled for stylus-sdk")
-            click.echo('''   [dependencies]
-            stylus-sdk = { version = "0.6.0", features = ["reentrant"] }\n''')
+            click.echo("      Status: You have disabled for stylus-sdk")
+            click.echo('''\n  [dependencies]
+  stylus-sdk = { version = "0.6.0", features = ["reentrant"] }\n''')
             click.echo(
-                "      Recommendation: You can remove reentrant from features so it can handle automatically by stylus-sdk.")
+                "  Recommendation: You can remove reentrant from features so it can handle automatically by stylus-sdk.")
             click.echo(
-                "      Ensure that your contract logic is designed to handle reentrancy appropriately.")
+                "  Ensure that your contract logic is designed to handle reentrancy appropriately.")
 
             # Print summary
             click.echo(f"\n===== Analysis Summary =====")
@@ -210,23 +210,6 @@ def static_analyze(target: str, output: Optional[str], pdf: Optional[str], verbo
         if pdf:
             generate_pdf_report(all_results, pdf)
 
-        # if analyzer.check_reentrancy_feature(target):
-        #     click.echo("\nHigh severity issues:")
-        #     click.echo("  [1] Reentrancy feature status")
-        #     click.echo("      Status: NOT enabled for stylus-sdk")
-        #     click.echo(
-        #         "      Recommendation: The stylus-sdk will automatically handle reentrancy checks.")
-        #     click.echo(
-        #         "      Ensure that your contract logic is designed to handle reentrancy appropriately.")
-        #     click.echo(
-        #         "      Consider reviewing your contract for potential reentrancy vulnerabilities.")
-
-        #     # Print summary
-        #     click.echo(f"\n===== Analysis Summary =====")
-        #     click.echo(f"Analyzed {len(contract_files)} files")
-        #     click.echo(f"Found {total_issues} total issues")
-        # else:
-        #     click.echo("Reentrancy feature is enabled for stylus-sdk.")
 
     else:
         code = read_file_content(target)
@@ -249,16 +232,23 @@ def static_analyze(target: str, output: Optional[str], pdf: Optional[str], verbo
             generate_pdf_report(analysis_result, pdf)
 
         if analyzer.check_reentrancy_feature(target):
-            click.echo("Reentrancy feature is enabled for stylus-sdk.")
+            click.echo("\nHigh severity issues:")
+            click.echo("  [1] Reentrancy feature status")
+            click.echo("      Status: You have disabled for stylus-sdk")
+            click.echo('''\n  [dependencies]
+  stylus-sdk = { version = "0.6.0", features = ["reentrant"] }\n''')
+            click.echo(
+                "  Recommendation: You can remove reentrant from features so it can handle automatically by stylus-sdk.")
+            click.echo(
+                "  Ensure that your contract logic is designed to handle reentrancy appropriately.")
+
+            # Print summary
+            click.echo(f"\n===== Analysis Summary =====")
+            click.echo(f"Analyzed {len(contract_files)} files")
+            click.echo(f"Found {total_issues} total issues")
         else:
-            click.echo(
-                "Reentrancy feature is NOT enabled for stylus-sdk. This is a high-severity issue.")
-            click.echo(
-                "Consider enabling the reentrancy feature in your Cargo.toml:")
-            click.echo('''\n[dependencies]
-stylus-sdk = { version = "0.6.0", features = ["reentrant"] }\n''')
-            click.echo(
-                "Disabling this feature may expose your contract to reentrancy attacks. Ensure that you handle reentrancy carefully in your contract logic.")
+            click.echo("Reentrancy feature is enabled for stylus-sdk.")
+
 
 
 def main():
@@ -272,3 +262,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

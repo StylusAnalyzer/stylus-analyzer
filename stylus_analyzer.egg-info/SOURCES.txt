@@ -22,3 +22,13 @@ stylus_analyzer/detectors/unwrap_detector.py
 stylus_analyzer/tests/__init__.py
 stylus_analyzer/tests/test_ai_analyzer.py
 stylus_analyzer/tests/test_static_analyzer.py
+stylus_analyzer/tree-sitter-rust/Cargo.toml
+stylus_analyzer/tree-sitter-rust/README.md
+stylus_analyzer/tree-sitter-rust/binding.gyp
+stylus_analyzer/tree-sitter-rust/grammar.js
+stylus_analyzer/tree-sitter-rust/package.json
+stylus_analyzer/tree-sitter-rust/src/grammar.json
+stylus_analyzer/tree-sitter-rust/src/node-types.json
+stylus_analyzer/tree-sitter-rust/src/parser.c
+stylus_analyzer/tree-sitter-rust/src/scanner.c
+stylus_analyzer/tree-sitter-rust/src/tree_sitter/parser.h

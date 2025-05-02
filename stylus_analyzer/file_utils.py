@@ -1,3 +1,4 @@
+
 """
 Utility functions for file operations in the Stylus Analyzer
 """
@@ -6,6 +7,8 @@ import glob
 from typing import List, Optional, Dict, Any, Tuple
 import tree_sitter
 from tree_sitter import Language, Parser
+import pkg_resources
+import shutil
 
 # Global parser instance to avoid recreating it multiple times
 _RUST_PARSER = None
@@ -20,18 +23,26 @@ def get_rust_parser():
     global _RUST_PARSER
     if _RUST_PARSER is None:
         try:
+            # Get the package directory
+            package_dir = pkg_resources.resource_filename('stylus_analyzer', '')
+            
+            # Define paths
+            build_dir = os.path.join(package_dir, 'build')
+            rust_dir = os.path.join(package_dir, 'tree-sitter-rust')
+            so_file = os.path.join(build_dir, 'my-languages.so')
+            
+            # Create build directory if it doesn't exist
+            os.makedirs(build_dir, exist_ok=True)
+            
             # Only build the library if it doesn't exist
-            if not os.path.exists('build/my-languages.so'):
-                os.makedirs("build", exist_ok=True)
-                Language.build_library(
-                    'build/my-languages.so',
-                    [
-                        'tree-sitter-rust'
-                    ]
+            if not os.path.exists(so_file):
+                tree_sitter.Language.build_library(
+                    so_file,
+                    [rust_dir]
                 )
             
             # Load the Rust language
-            rust_language = Language('build/my-languages.so', 'rust')
+            rust_language = Language(so_file, 'rust')
             
             # Initialize the parser
             _RUST_PARSER = Parser()
