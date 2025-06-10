@@ -62,8 +62,8 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Jay Sojitra",
-    author_email="jaysojitra1011@gmail.com",
-    url="https://github.com/Jay-Sojitra/stylus-analyzer",
+    author_email="jaysojitra@lampros.tech",
+    url="https://github.com/StylusAnalyzer/stylus-analyzer",
     keywords="stylus, rust, security, smart-contracts, analysis, ai",
     classifiers=[
         "Development Status :: 3 - Alpha",

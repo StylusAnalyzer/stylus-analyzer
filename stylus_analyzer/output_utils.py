@@ -197,10 +197,10 @@ def _add_file_analysis_to_pdf(elements, result, normal_style, code_style):
                 
                 # Issue details table
                 data = [
-                    ["Location", f"Lines {issue.get('line_start', '?')}-{issue.get('line_end', '?')}"],
-                    ["Description", issue.get('description', 'No description provided')],
-                    ["Code Snippet", ''],  # We'll add the code separately
-                    ["Recommendation", issue.get('recommendation', 'No recommendation provided')]
+                    ["Location", f"Lines {issue.get('line_start', '?')}-{issue.get('line_end', '?')}`"],
+                    ["Description", Paragraph(issue.get('description', 'No description provided'), normal_style)],
+                    ["Code Snippet", Paragraph(issue.get('code_snippet', ''), code_style) if issue.get('code_snippet') else ''],
+                    ["Recommendation", Paragraph(issue.get('recommendation', 'No recommendation provided'), normal_style)]
                 ]
                 
                 # Create the table
@@ -216,10 +216,6 @@ def _add_file_analysis_to_pdf(elements, result, normal_style, code_style):
                 ]))
                 
                 elements.append(table)
-                
-                # Add code snippet with special formatting
-                if issue.get('code_snippet'):
-                    elements.append(Paragraph(issue.get('code_snippet', ''), code_style))
                 
                 elements.append(Spacer(1, 0.2*inch))
     

@@ -11,14 +11,6 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-if not os.getenv("OPENAI_API_KEY"):
-    logger.warning("OPENAI_API_KEY not found in environment variables")
-
 class AIAnalyzer:
     """
     Class to analyze Rust contracts using OpenAI's GPT models
@@ -31,7 +23,22 @@ class AIAnalyzer:
             model: The OpenAI model to use, defaults to gpt-4o-mini
         """
         self.model = model
+        self._client = None
+        self._ensure_client()
         
+    def _ensure_client(self):
+        """
+        Lazily load .env and initialize OpenAI client only when needed.
+        """
+        if self._client is not None:
+            return
+        load_dotenv()
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.error("OPENAI_API_KEY not found in environment variables. Please set it in your .env file or environment.")
+            raise ValueError("OPENAI_API_KEY not found in environment variables. Please set it in your .env file or environment.")
+        self._client = OpenAI(api_key=api_key)
+
     def analyze_contract(self, contract_content: str, readme_content: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze a Rust contract for potential vulnerabilities using GPT
@@ -44,11 +51,12 @@ class AIAnalyzer:
             Dictionary containing analysis results
         """
         try:
+            self._ensure_client()
             # Prepare prompt for the AI
             prompt = self._prepare_prompt(contract_content, readme_content)
             
             # Call the OpenAI API
-            response = client.chat.completions.create(
+            response = self._client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a security expert specialized in analyzing Rust contracts for the Stylus framework. Identify potential bugs, vulnerabilities, and code quality issues."},
