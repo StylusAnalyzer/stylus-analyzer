@@ -1,10 +1,10 @@
 Metadata-Version: 2.4
 Name: stylus-analyzer
-Version: 0.1.7
+Version: 0.1.9
 Summary: AI-powered bug detection tool for Stylus/Rust contracts
-Home-page: https://github.com/Jay-Sojitra/stylus-analyzer
+Home-page: https://github.com/StylusAnalyzer/stylus-analyzer
 Author: Jay Sojitra
-Author-email: jaysojitra1011@gmail.com
+Author-email: jaysojitra@lampros.tech
 Keywords: stylus,rust,security,smart-contracts,analysis,ai
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
@@ -20,8 +20,9 @@ License-File: LICENSE
 Requires-Dist: openai>=1.0.0
 Requires-Dist: python-dotenv>=1.0.0
 Requires-Dist: click>=8.0.0
-Requires-Dist: tree-sitter>=0.20.0
+Requires-Dist: tree-sitter==0.20.2
 Requires-Dist: setuptools>=42.0.0
+Requires-Dist: reportlab>=3.0.0
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier

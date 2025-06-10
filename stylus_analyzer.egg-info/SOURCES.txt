@@ -13,6 +13,9 @@ stylus_analyzer.egg-info/dependency_links.txt
 stylus_analyzer.egg-info/entry_points.txt
 stylus_analyzer.egg-info/requires.txt
 stylus_analyzer.egg-info/top_level.txt
+stylus_analyzer/build/my-languages.exp
+stylus_analyzer/build/my-languages.lib
+stylus_analyzer/build/my-languages.so
 stylus_analyzer/detectors/__init__.py
 stylus_analyzer/detectors/detector_base.py
 stylus_analyzer/detectors/encode_packed_detector.py

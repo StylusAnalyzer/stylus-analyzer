@@ -30,7 +30,7 @@ copy_tree_sitter_rust()
 
 setup(
     name="stylus-analyzer",
-    version="0.1.7",
+    version="0.1.9",
     packages=find_packages(),
     package_data={
         'stylus_analyzer': [
@@ -50,8 +50,9 @@ setup(
         "openai>=1.0.0",
         "python-dotenv>=1.0.0",
         "click>=8.0.0",
-        "tree-sitter>=0.20.0",
+        "tree-sitter==0.20.2",
         "setuptools>=42.0.0",
+        "reportlab>=3.0.0",
     ],
     entry_points={
         "console_scripts": [
