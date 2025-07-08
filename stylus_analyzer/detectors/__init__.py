@@ -14,6 +14,7 @@ from stylus_analyzer.detectors.unchecked_transfer import UncheckedTransferDetect
 from stylus_analyzer.detectors.unwrap_detector import UnwrapDetector
 from stylus_analyzer.detectors.panic_detector import PanicDetector
 from stylus_analyzer.detectors.encode_packed_detector import EncodePackedDetector
+from stylus_analyzer.detectors.locked_ether_detector import LockedEtherDetector
 
 # Logger for this module
 logger = logging.getLogger(__name__)
@@ -23,7 +24,8 @@ AVAILABLE_DETECTORS = [
     UncheckedTransferDetector,
     UnwrapDetector,
     PanicDetector,
-    EncodePackedDetector
+    EncodePackedDetector,
+    LockedEtherDetector
 ]
 
 def get_available_detectors() -> List[Type[BaseDetector]]:

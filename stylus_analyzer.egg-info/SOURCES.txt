@@ -19,6 +19,7 @@ stylus_analyzer/build/my-languages.so
 stylus_analyzer/detectors/__init__.py
 stylus_analyzer/detectors/detector_base.py
 stylus_analyzer/detectors/encode_packed_detector.py
+stylus_analyzer/detectors/locked_ether_detector.py
 stylus_analyzer/detectors/panic_detector.py
 stylus_analyzer/detectors/unchecked_transfer.py
 stylus_analyzer/detectors/unwrap_detector.py
